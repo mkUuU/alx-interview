@@ -1,33 +1,40 @@
+#!/usr/bin/python3
+""" UTF-8 Validation """
+
+
 def validUTF8(data):
-    # Helper function to check if a byte is a valid continuation byte
-    def is_continuation(byte):
-        return byte >> 6 == 0b10
+    """
+    Method that determines if a given data set represents a valid
+    UTF-8 encoding.
+    """
+    number_bytes = 0
 
-    # Iterate through the data
-    i = 0
-    while i < len(data):
-        # Get the number of bytes for this character
-        first_byte = data[i] & 0xFF  # Ensure we only consider the 8 least significant bits
-        if first_byte >> 7 == 0:  # 1-byte character
-            bytes_count = 1
-        elif first_byte >> 5 == 0b110:  # 2-byte character
-            bytes_count = 2
-        elif first_byte >> 4 == 0b1110:  # 3-byte character
-            bytes_count = 3
-        elif first_byte >> 3 == 0b11110:  # 4-byte character
-            bytes_count = 4
-        else:
-            return False  # Invalid first byte
+    mask_1 = 1 << 7
+    mask_2 = 1 << 6
 
-        # Check if we have enough bytes
-        if i + bytes_count > len(data):
-            return False
+    for i in data:
 
-        # Validate continuation bytes
-        for j in range(1, bytes_count):
-            if not is_continuation(data[i + j] & 0xFF):
+        mask_byte = 1 << 7
+
+        if number_bytes == 0:
+
+            while mask_byte & i:
+                number_bytes += 1
+                mask_byte = mask_byte >> 1
+
+            if number_bytes == 0:
+                continue
+
+            if number_bytes == 1 or number_bytes > 4:
                 return False
 
-        i += bytes_count
+        else:
+            if not (i & mask_1 and not (i & mask_2)):
+                    return False
 
-    return True
+        number_bytes -= 1
+
+    if number_bytes == 0:
+        return True
+
+    return False
